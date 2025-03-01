@@ -8,5 +8,5 @@ class Kernel {
     _locator.registerSingleton<UserService>(UserService());
   }
 
-  static T resolve<T>() => _locator<T>();
+  static T resolve<T extends Object>() => _locator<T>();
 }
