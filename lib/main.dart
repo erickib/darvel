@@ -3,8 +3,13 @@ import 'package:shelf/shelf.dart';
 import 'core/router.dart';
 import 'core/kernel.dart';
 import 'config/app.dart';
+import 'core/cli.dart';
 
-void main() async {
+void main(List<String> arguments) async {
+  if (arguments.isNotEmpty) {
+    Cli.handle(arguments);
+    return;
+  }
   Kernel.initialize(); // Dependency injection setup
 
   var handler = const Pipeline()

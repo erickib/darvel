@@ -1,15 +1,26 @@
+// lib/core/router.dart
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
-import '../app/controllers/HomeController.dart';
+import 'controller_routes.dart';
 
 class RouterConfig {
-  final HomeController _homeController = HomeController();
-
   Handler get handler {
     final router = Router();
 
-    router.get('/', _homeController.index);
-    router.get('/about', _homeController.about);
+    for (final entry in controllerRoutes.entries) {
+      final parts = entry.key.split(' ');
+      final method = parts[0];
+      final path = parts[1];
+      final handler = entry.value;
+
+      if (method == 'GET') {
+        router.get(
+            path, (Request request) => handler(request, <String, dynamic>{}));
+      } else if (method == 'POST') {
+        router.post(
+            path, (Request request) => handler(request, <String, dynamic>{}));
+      }
+    }
 
     return router;
   }

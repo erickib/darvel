@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:yaml/yaml.dart';
 
 class Cli {
   static void handle(List<String> args) {
@@ -39,6 +40,10 @@ class Cli {
       case 'serve':
         serveApp();
         break;
+      case 'scan':
+        scanControllers();
+        break;
+      // Other cases...
       default:
         print('Unknown command: ${args[0]}');
     }
@@ -140,5 +145,80 @@ class ${name}Migration {
       print(result.stdout);
       print(result.stderr);
     });
+  }
+
+  static void scanControllers() {
+    final env = File('.env');
+    bool annotationsEnabled = false;
+
+    if (env.existsSync()) {
+      final content = env.readAsStringSync();
+      final rawEnvVars = loadYaml(content);
+
+      // Force cast to Map<String, dynamic>
+      var envVars = <String, dynamic>{};
+      if (rawEnvVars is Map) {
+        for (var entry in rawEnvVars.entries) {
+          envVars[entry.key.toString()] = entry.value;
+        }
+      } else {
+        envVars = rawEnvVars;
+      }
+
+      annotationsEnabled = envVars['ANNOTATIONS_ENABLED']?.toString() == 'true';
+    }
+
+    final controllersDir = Directory('lib/app/controllers');
+    final controllers = controllersDir
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    final bufferImports = StringBuffer();
+    final bufferRoutes = StringBuffer();
+
+    for (var file in controllers) {
+      final name = file.uri.pathSegments.last.replaceAll('.dart', '');
+      var fullClassName = name;
+      bufferImports.writeln("import '../app/controllers/$name.dart';");
+
+      final content = file.readAsStringSync();
+
+      // Extract methods and annotations (if enabled)
+      final methodMatches = RegExp(
+              r'''@(Route\.(get|post)\(["'](.*?)["']\))\s+Response\s+(\w+)\(''')
+          .allMatches(content);
+
+      if (annotationsEnabled && methodMatches.isNotEmpty) {
+        for (var match in methodMatches) {
+          final methodType = match.group(2)?.toUpperCase();
+          final path = match.group(3);
+          final methodName = match.group(4);
+
+          bufferRoutes.writeln(
+              "  '$methodType $path': (Request request, Map<String, dynamic> services) => $fullClassName().$methodName(request, services),");
+        }
+      } else {
+        var index = fullClassName.indexOf('Controller');
+        var className = fullClassName.substring(0, index);
+        bufferRoutes.writeln(
+            "  'GET /${className.toLowerCase()}': (Request request, Map<String, dynamic> services) => $fullClassName().index(request, services),");
+      }
+    }
+
+    //build final buffer
+    final buffer = StringBuffer();
+    final now = DateTime.now();
+    buffer.writeln("// DARVEL-GENERATED - DO NOT EDIT $now");
+    buffer.writeln("import 'package:shelf/shelf.dart';");
+    buffer.write(bufferImports.toString());
+    buffer.writeln("final Map<String, Function> controllerRoutes = {");
+    buffer.write(bufferRoutes.toString());
+    buffer.writeln("};");
+
+    final routesFile = File('lib/core/controller_routes.dart');
+    routesFile.writeAsStringSync(buffer.toString());
+    print('Controller routes generated successfully.');
   }
 }
