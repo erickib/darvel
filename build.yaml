@@ -1,0 +1,15 @@
+targets:
+  $default:
+    builders:
+      darvel|routeBuilder:
+        enabled: true
+
+builders:
+  routeBuilder:
+    import: "package:darvel/core/builders/route_builder.dart"
+    builder_factories: ["routeBuilderFactory"]
+    build_extensions: { ".dart": [".route.g.part"] }
+    auto_apply: dependents
+    runs_before: ["source_gen|combining_builder"]
+    applies_builders: ["source_gen|combining_builder"]
+    build_to: source

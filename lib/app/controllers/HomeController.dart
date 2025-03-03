@@ -10,7 +10,7 @@ class HomeController {
   HomeController();
 
   @Route.get('/')
-  Response index(Request request, Map<String, dynamic> services) {
+  Response index(Request request) {
     final template =
         Template(File('lib/views/home.mustache').readAsStringSync());
     final output = template
@@ -19,7 +19,7 @@ class HomeController {
   }
 
   @Route.get('/home-about')
-  Response about(Request request, Map<String, dynamic> services) {
+  Response about(Request request) {
     final template =
         Template(File('lib/views/about.mustache').readAsStringSync());
     final output = template.renderString({
@@ -27,5 +27,10 @@ class HomeController {
       'content': 'This is the HomeController -> about page.'
     });
     return Response.ok(output, headers: {'Content-Type': 'text/html'});
+  }
+
+  @Route.get('/posts/<postId>/comments/<commentId>')
+  Response getComment(Request request, String postId, String commentId) {
+    return Response.ok('Post: $postId, Comment: $commentId');
   }
 }

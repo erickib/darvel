@@ -43,6 +43,13 @@ class Cli {
       case 'scan':
         scanControllers();
         break;
+      case 'build:routes':
+        buildRoutes();
+        break;
+      case 'route:build':
+        //runBuild();
+        scanControllers2();
+        break;
       // Other cases...
       default:
         print('Unknown command: ${args[0]}');
@@ -187,7 +194,7 @@ class ${name}Migration {
 
       // Extract methods and annotations (if enabled)
       final methodMatches = RegExp(
-              r'''@(Route\.(get|post)\(["'](.*?)["']\))\s+Response\s+(\w+)\(''')
+              r'''@(Route\.(get|post|put|delete)\(["'](.*?)["']\))\s+Response\s+(\w+)\(''')
           .allMatches(content);
 
       if (annotationsEnabled && methodMatches.isNotEmpty) {
@@ -195,15 +202,207 @@ class ${name}Migration {
           final methodType = match.group(2)?.toUpperCase();
           final path = match.group(3);
           final methodName = match.group(4);
+          final params = _extractPathParams(path);
 
           bufferRoutes.writeln(
-              "  '$methodType $path': (Request request, Map<String, dynamic> services) => $fullClassName().$methodName(request, services),");
+              "  '$methodType $path': (Request request, Map<String, dynamic> services) {");
+
+          // Extract path params into variables
+          for (final param in params) {
+            if (param.endsWith('?')) {
+              bufferRoutes.writeln(
+                  "    final String? ${param.replaceAll('?', '')} = request.params['${param.replaceAll('?', '')}'];");
+            } else {
+              bufferRoutes.writeln(
+                  "    final String? $param = request.params['$param'];");
+              bufferRoutes.writeln(
+                  "    if ($param == null) return Response.badRequest(body: 'Missing required parameter: $param');");
+            }
+          }
+          final paramList = params
+              .map((p) => p.endsWith('?') ? p.replaceAll('?', '') : p)
+              .join(', ');
+
+          final paramString = paramList.isEmpty ? '' : ', $paramList';
+          bufferRoutes.writeln(
+              "    return $fullClassName().$methodName(request, services$paramString);");
+
+          bufferRoutes.writeln("  },");
         }
       } else {
         var index = fullClassName.indexOf('Controller');
         var className = fullClassName.substring(0, index);
+        //bufferRoutes.writeln(
+        //    "  'GET /${className.toLowerCase()}': (Request request, Map<String, dynamic> services) => $fullClassName().index(request, services),");
+        final fixedPath = convertToShelfRouterPath('/users/:id');
         bufferRoutes.writeln(
-            "  'GET /${className.toLowerCase()}': (Request request, Map<String, dynamic> services) => $fullClassName().index(request, services),");
+            "  'GET $fixedPath': (Request request, Map<String, dynamic> services) => HomeController().getUser(request, services, request.params['id']),");
+      }
+    }
+
+    //build final buffer
+    final buffer = StringBuffer();
+    final now = DateTime.now();
+    buffer.writeln("// DARVEL-GENERATED - DO NOT EDIT $now");
+    buffer.writeln("import 'package:shelf/shelf.dart';");
+    buffer.writeln("import 'package:shelf_router/shelf_router.dart';");
+    buffer.write(bufferImports.toString());
+    buffer.writeln("final Map<String, Function> controllerRoutes = {");
+    buffer.write(bufferRoutes.toString());
+    buffer.writeln("};");
+
+    final routesFile = File('lib/core/controller_routes.dart');
+    routesFile.writeAsStringSync(buffer.toString());
+    print('Controller routes generated successfully.');
+  }
+
+  static List<String> _extractPathParams(String? path) {
+    if (path!.isEmpty) return [];
+    final paramRegex = RegExp(r':(\w+)');
+    return paramRegex.allMatches(path).map((match) => match.group(1)!).toList();
+  }
+
+  static String convertToShelfRouterPath(String path) {
+    return path.replaceAllMapped(RegExp(r':(\w+)(\?)?'), (match) {
+      final paramName = match.group(1);
+      final isOptional = match.group(2) != null;
+      return '<$paramName>';
+    });
+  }
+
+  static void buildRoutes() {
+    print('Scanning controllers and generating routes...');
+
+    // Run build_runner
+    var result = Process.runSync('dart',
+        ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+        runInShell: true, workingDirectory: Directory.current.path);
+    print(result.stdout);
+    print(result.stderr);
+
+    // After build_runner, regenerate router.dart
+    generateGlobalRouter();
+
+    print('Routes built and global router generated successfully!');
+  }
+
+  static void generateGlobalRouter() {
+    final controllersDir = Directory('lib/app/controllers');
+    final controllers = controllersDir
+        .listSync()
+        .whereType<File>()
+        .where((file) =>
+            file.path.endsWith('.dart') && !file.path.endsWith('.g.dart'))
+        .toList();
+
+    final buffer = StringBuffer();
+    buffer.writeln('// AUTO-GENERATED - DO NOT EDIT');
+    buffer.writeln("import 'package:shelf/shelf.dart';");
+    buffer.writeln("import 'package:shelf_router/shelf_router.dart';");
+
+    for (var file in controllers) {
+      final name = file.uri.pathSegments.last.replaceAll('.dart', '');
+      buffer.writeln("import '../app/controllers/$name.dart';");
+    }
+
+    buffer.writeln('class RouterConfig {');
+    buffer.writeln('  Handler get handler {');
+    buffer.writeln('    final router = Router();');
+
+    for (var file in controllers) {
+      final className = file.uri.pathSegments.last.replaceAll('.dart', '');
+      buffer.writeln('    router.mount("/", $className().router);');
+    }
+
+    buffer.writeln('    return router;');
+    buffer.writeln('  }');
+    buffer.writeln('}');
+
+    final routerFile = File('lib/core/router.dart');
+    routerFile.writeAsStringSync(buffer.toString());
+    print('Global router generated in lib/core/router.dart');
+  }
+
+  static void runBuild() {
+    print('Running build_runner...');
+
+    final result = Process.runSync(
+      'dart',
+      ['run', 'build_runner', 'build', '--delete-conflicting-outputs'],
+      runInShell: true,
+    );
+
+    if (result.exitCode != 0) {
+      print('Build runner failed: ${result.stderr}');
+      exit(result.exitCode);
+    } else {
+      print('Build runner completed successfully');
+    }
+  }
+
+  static void scanControllers2() {
+    final env = File('.env');
+    bool annotationsEnabled = false;
+
+    if (env.existsSync()) {
+      final content = env.readAsStringSync();
+      final envVars = loadYaml(content) as Map;
+      annotationsEnabled = envVars['ANNOTATIONS_ENABLED']?.toString() == 'true';
+    }
+
+    final controllersDir = Directory('lib/app/controllers');
+    final controllers = controllersDir
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .toList();
+
+    final bufferImports = StringBuffer();
+    final bufferRoutes = StringBuffer();
+
+    for (var file in controllers) {
+      final name = file.uri.pathSegments.last.replaceAll('.dart', '');
+      var fullClassName = name;
+
+      bufferImports.writeln("import '../app/controllers/$name.dart';");
+
+      final content = file.readAsStringSync();
+
+      final methodMatches = RegExp(
+              r'''@(Route\.(get|post|put|delete)\(["\'](.*?)["\']\))\s+Response\s+(\w+)\(''')
+          .allMatches(content);
+      for (var match in methodMatches) {
+        //print(match.group(3));
+        final methodType = match.group(2)?.toUpperCase() ?? 'GET';
+
+        final path = match.group(3) ?? '/';
+        final methodName = match.group(4);
+
+        final paramNames = _extractParamsFromPath(path);
+
+        bufferRoutes.writeln("  '$methodType $path': (Request request) {");
+
+        if (paramNames.isNotEmpty) {
+          for (var i = 0; i < paramNames.length; i++) {
+            final paramName = paramNames[i];
+            bufferRoutes.writeln(
+                "    final String? $paramName = request.url.pathSegments.length > ${i + 1} ? request.url.pathSegments[${i + 1}] : null;");
+            bufferRoutes.writeln(
+                "    if ($paramName == null) return Response.badRequest(body: 'Missing required parameter: $paramName');");
+          }
+
+          // Generate method call with parameters
+          final paramsList = ['request'] + paramNames;
+          bufferRoutes.writeln(
+              "    return $fullClassName().$methodName(${paramsList.join(', ')});");
+        } else {
+          var index = fullClassName.indexOf('Controller');
+          var className = fullClassName.substring(0, index);
+          bufferRoutes
+              .writeln("    return $fullClassName().$methodName(request);");
+        }
+
+        bufferRoutes.writeln("  },");
       }
     }
 
@@ -220,5 +419,10 @@ class ${name}Migration {
     final routesFile = File('lib/core/controller_routes.dart');
     routesFile.writeAsStringSync(buffer.toString());
     print('Controller routes generated successfully.');
+  }
+
+  static List<String> _extractParamsFromPath(String path) {
+    final paramMatches = RegExp(r'<(\w+)>').allMatches(path);
+    return paramMatches.map((match) => match.group(1)!).toList();
   }
 }

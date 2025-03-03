@@ -5,7 +5,7 @@ import 'package:mustache_template/mustache_template.dart';
 
 class AboutController {
   @Route.get('/about-index')
-  Response index(Request request, Map<String, dynamic> services) {
+  Response index(Request request) {
     final template =
         Template(File('lib/views/home.mustache').readAsStringSync());
     final output = template.renderString({
@@ -16,7 +16,7 @@ class AboutController {
   }
 
   @Route.get('/about')
-  Response about(Request request, Map<String, dynamic> services) {
+  Response about(Request request) {
     return Response.ok('This is the AboutController -> about page');
   }
 }
