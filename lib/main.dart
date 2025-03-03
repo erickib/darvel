@@ -5,6 +5,7 @@ import 'package:darvel/core/kernel.dart';
 import 'package:darvel/config/app.dart';
 import 'package:darvel/core/cli.dart';
 import 'package:darvel/core/controller_routes.dart';
+import 'package:darvel/core/logging/logging_middleware.dart';
 
 void main(List<String> arguments) async {
   if (arguments.isNotEmpty) {
@@ -14,7 +15,8 @@ void main(List<String> arguments) async {
   Kernel.initialize(); // Dependency injection setup
 
   var handler = const Pipeline()
-      .addMiddleware(logRequests())
+      .addMiddleware(logRequests()) // Log padrão do shelf (opcional)
+      .addMiddleware(loggingMiddleware()) // darvel log
       .addHandler(RouterConfig(controllerRoutes).handler);
 
   var server = await shelf_io.serve(handler, AppConfig.host, AppConfig.port);

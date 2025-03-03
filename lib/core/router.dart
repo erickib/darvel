@@ -49,6 +49,7 @@ import 'dart:async';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
+import 'logging/internal_log_controller.dart';
 
 typedef RouteHandler0 = Future<Response> Function(Request request);
 typedef RouteHandler1 = Future<Response> Function(
@@ -75,10 +76,17 @@ class RouterConfig {
       } else if (method == 'POST') {
         router.post(
             path, (Request request) => _handleRequest(entry, request, path));
+      } else if (method == 'DELETE') {
+        router.get(
+            path, (Request request) => _handleRequest(entry, request, path));
       } else {
         throw UnsupportedError('Método HTTP não suportado: $method');
       }
     }
+
+    // darvel routes for logs
+    final logController = InternalLogController();
+    router.mount('/', logController.router);
 
     return router;
   }
