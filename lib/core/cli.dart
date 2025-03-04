@@ -99,6 +99,45 @@ class ${name}Controller {
     print('View ${name.toLowerCase()}.mustache created');
   }
 
+  void generateController(String name) {
+    final controllerName = '${name}Controller';
+    final controllerFile = File('lib/app/controllers/$controllerName.dart');
+    if (controllerFile.existsSync()) {
+      print('Controller already exists!');
+      return;
+    }
+
+    final content = '''
+import '../../core/view_renderer.dart';
+import '../../core/response_helpers.dart';
+
+class $controllerName {
+  Response index(Request request, Map<String, dynamic> services) {
+    final context = {
+      'title': '$name Page'
+    };
+
+    final html = ViewRenderer.render('${name.toLowerCase()}/index', context, layout: 'main');
+    return responseHtml(html);
+  }
+}
+  ''';
+
+    controllerFile.writeAsStringSync(content);
+    print('Controller $controllerName created!');
+
+    final viewDir = Directory('lib/app/views/${name.toLowerCase()}');
+    if (!viewDir.existsSync()) {
+      viewDir.createSync(recursive: true);
+    }
+
+    final viewFile = File('${viewDir.path}/index.mustache');
+    viewFile.writeAsStringSync('<h1>Welcome to $name Page</h1>');
+    print('View for $name created!');
+
+    // Optionally regenerate routes if needed
+  }
+
   static void makeModel(String name) {
     final file = File('lib/app/models/$name.dart');
     final content = """

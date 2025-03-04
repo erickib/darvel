@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import '../../core/annotations.dart';
 import 'package:mustache_template/mustache_template.dart';
-import '../services/UserService.dart';
+import '../../core/views/view_renderer.dart';
+import '../../core/helpers/response.dart';
 
 class HomeController {
   //final UserService userService;
@@ -11,11 +12,11 @@ class HomeController {
 
   @Route.get('/')
   Response index(Request request) {
-    final template =
-        Template(File('lib/views/home.mustache').readAsStringSync());
-    final output = template
-        .renderString({'title': 'Welcome', 'message': 'Welcome to LaraDart!'});
-    return Response.ok(output, headers: {'Content-Type': 'text/html'});
+    final html = ViewRenderer.render(
+        'home', {'name': 'John Doe', 'title': 'Home Page'},
+        layout: 'layout');
+
+    return responseAsHtml(html);
   }
 
   @Route.get('/home-about')
