@@ -5,15 +5,17 @@ import 'package:intl/intl.dart';
 /// ### Internal Server Error Page
 /// #### Renders a raw string html page for the server internal exceptions
 /// ##### Callable from anywhere of the framework to be used as the html body
-/// ##### in a response, eg.:
-///     String errorHtml = PageInternalServerError(
-///       error: e.toString(),
-///       stack: stack.toString(),
-///       ).render();
-///     return Response.internalServerError(
-///         body: errorHtml,
-///         headers: {'Content-Type': 'text/html'},
-///       );
+/// ##### in a response:
+/// ```dart
+///String errorHtml = PageInternalServerError(
+///  error: e.toString(),
+///  stack: stack.toString(),
+///  ).render();
+///return Response.internalServerError(
+///    body: errorHtml,
+///    headers: {'Content-Type': 'text/html'},
+///  );
+/// ```
 class PageInternalServerError {
   final String error;
   final String stack;
