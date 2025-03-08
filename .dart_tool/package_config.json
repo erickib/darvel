@@ -98,6 +98,12 @@
       "languageVersion": "2.19"
     },
     {
+      "name": "clock",
+      "rootUri": "file:///C:/Users/erick/AppData/Local/Pub/Cache/hosted/pub.dev/clock-1.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
       "name": "code_builder",
       "rootUri": "file:///C:/Users/erick/AppData/Local/Pub/Cache/hosted/pub.dev/code_builder-4.10.1",
       "packageUri": "lib/",
@@ -210,6 +216,12 @@
       "rootUri": "file:///C:/Users/erick/AppData/Local/Pub/Cache/hosted/pub.dev/http_parser-4.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "intl",
+      "rootUri": "file:///C:/Users/erick/AppData/Local/Pub/Cache/hosted/pub.dev/intl-0.20.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
     },
     {
       "name": "io",
@@ -458,7 +470,7 @@
       "languageVersion": "3.0"
     }
   ],
-  "generated": "2025-03-04T23:02:30.476877Z",
+  "generated": "2025-03-08T02:17:34.357561Z",
   "generator": "pub",
   "generatorVersion": "3.7.0",
   "flutterRoot": "file:///C:/dev/flutter",

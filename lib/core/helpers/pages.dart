@@ -1,3 +1,7 @@
+import 'dart:ffi';
+
+import 'package:intl/intl.dart';
+
 /// ### Internal Server Error Page
 /// #### Renders a raw string html page for the server internal exceptions
 /// ##### Callable from anywhere of the framework to be used as the html body
@@ -40,81 +44,22 @@ class PageInternalServerError {
 
 /// ### Access Logs Page
 /// #### renders a raw string html page for the server access logs
-// class PageAccessLogs {
-//   final String method;
-//   final String path;
-//   final Map<String, String> headers;
-//   final Map<String, String> queryParams;
-//   final int statusCode;
-
-//   PageAccessLogs({
-//     required this.method,
-//     required this.path,
-//     required this.headers,
-//     required this.queryParams,
-//     required this.statusCode,
-//   });
-
-//   String render() {
-//     String formattedHeaders = headers.entries
-//         .map((entry) => '<tr><td>${entry.key}</td><td>${entry.value}</td></tr>')
-//         .join();
-
-//     String formattedQueryParams = queryParams.entries
-//         .map((entry) => '<tr><td>${entry.key}</td><td>${entry.value}</td></tr>')
-//         .join();
-
-//     return '''
-//     <!DOCTYPE html>
-//     <html lang="en">
-//     <head>
-//         <title>Access Log</title>
-//         <style>
-//             body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
-//             h1 { color: #333; }
-//             table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-//             th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
-//             th { background: #007BFF; color: white; }
-//             .status { font-weight: bold; color: ${_getStatusColor(statusCode)}; }
-//         </style>
-//     </head>
-//     <body>
-//         <h1>Access Log</h1>
-//         <p><strong>Method:</strong> $method</p>
-//         <p><strong>Path:</strong> $path</p>
-//         <p><strong>Status Code:</strong> <span class="status">$statusCode</span></p>
-
-//         <h2>Headers</h2>
-//         <table>
-//             <tr><th>Key</th><th>Value</th></tr>
-//             $formattedHeaders
-//         </table>
-
-//         <h2>Query Parameters</h2>
-//         <table>
-//             <tr><th>Key</th><th>Value</th></tr>
-//             $formattedQueryParams
-//         </table>
-//     </body>
-//     </html>
-//     ''';
-//   }
-
-/// ### Access Logs Page
-/// #### renders a raw string html page for the server access logs
 class PageAccessLogs {
   final List<Map<String, dynamic>> logs;
 
   PageAccessLogs({required this.logs});
 
   String render() {
+    final DateFormat formatter = DateFormat('yyyy-MM-dd H:MM:ss');
     String logRows = logs.asMap().entries.map((entry) {
       int index = entry.key;
       Map<String, dynamic> log = entry.value;
+      final DateTime fromTimeStamp = DateTime.parse(log['timestamp']);
+      final String formatted = formatter.format(fromTimeStamp);
 
       return '''
         <tr onclick="toggleDetails('log_$index')">
-          <td>${log['timestamp']}</td>
+          <td>${formatted}</td>
           <td>Method: <strong>${log['method']}</strong></td>
           <td>Path: <strong>${log['path']}</strong></td>
           <td class="status"><strong><span class="status" style="color:${_getStatusColor(log['statusCode'])};">${log['statusCode']}</span></strong></td>
@@ -168,7 +113,9 @@ class PageAccessLogs {
 
   String _formatMap(Map<String, dynamic>? map) {
     if (map == null || map.isEmpty) return 'None';
-    return map.entries.map((e) => '${e.key}: ${e.value}').join('<br>');
+    return map.entries.map((e) => '''
+      <div style="border-bottom: black 1px solid;font-size: small;"><span style="display: inline-block; width: 150px;">${e.key}:</span> ${e.value}</div>
+    ''').join('');
   }
 
   // Helper function to color-code status codes
