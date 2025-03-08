@@ -24,6 +24,14 @@ Middleware loggingMiddleware() {
             statusCode: response.statusCode,
           );
         }
+
+        // Se a rota for /darvel/logs/errors, retorna a página de logs de erro
+        if (request.requestedUri.path == "/darvel/logs/errors") {
+          String logHtml =
+              PageErrorLogs(logs: LoggerService.errorLogs).render();
+          return Response.ok(logHtml, headers: {'Content-Type': 'text/html'});
+        }
+
         return response;
       } catch (e, stack) {
         // Log the error

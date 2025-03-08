@@ -100,6 +100,8 @@ class PageInternalServerError {
 //     ''';
 //   }
 
+/// ### Access Logs Page
+/// #### renders a raw string html page for the server access logs
 class PageAccessLogs {
   final List<Map<String, dynamic>> logs;
 
@@ -175,5 +177,70 @@ class PageAccessLogs {
     if (code >= 400 && code < 500) return 'orange';
     if (code >= 500) return 'red';
     return 'black';
+  }
+}
+
+/// ### Error Logs Page
+/// #### renders a raw string html page for the server error logs
+class PageErrorLogs {
+  final List<Map<String, dynamic>> logs;
+
+  PageErrorLogs({required this.logs});
+
+  String render() {
+    String logRows = logs.asMap().entries.map((entry) {
+      int index = entry.key;
+      Map<String, dynamic> log = entry.value;
+
+      return '''
+        <tr onclick="toggleDetails('log_$index')">
+          <td>${log['timestamp']}</td>
+          <td>${log['error']}</td>
+          <td>${log['statusCode']}</td>
+        </tr>
+        <tr id="log_$index" class="details">
+          <td colspan="3">
+            <strong>Stack Trace:</strong><br>
+            <pre>${log['stack'] ?? 'No stack trace available'}</pre>
+          </td>
+        </tr>
+      ''';
+    }).join();
+
+    return '''
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>Error Logs</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; background: #f1f1f1; }
+            h1 { color: #d9534f; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+            th { background: #d9534f; color: white; }
+            .details { display: none; background: #fafafa; }
+            .details td { padding: 15px; font-size: 14px; }
+            pre { white-space: pre-wrap; word-wrap: break-word; font-size: 14px; }
+        </style>
+        <script>
+            function toggleDetails(id) {
+                var row = document.getElementById(id);
+                row.style.display = row.style.display === 'table-row' ? 'none' : 'table-row';
+            }
+        </script>
+    </head>
+    <body>
+        <h1>Error Logs</h1>
+        <table>
+            <tr>
+                <th>Timestamp</th>
+                <th>Error</th>
+                <th>Status</th>
+            </tr>
+            $logRows
+        </table>
+    </body>
+    </html>
+    ''';
   }
 }
