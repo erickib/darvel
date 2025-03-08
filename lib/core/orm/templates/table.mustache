@@ -1,0 +1,5 @@
+CREATE TABLE {{tableName}} (
+{{#columns}}
+    {{name}} {{type}}{{#primaryKey}} PRIMARY KEY{{/primaryKey}}{{^last}},{{/last}}
+{{/columns}}
+);

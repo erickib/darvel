@@ -1,7 +1,7 @@
 import '../models/User.dart';
 
 class UserService {
-  List<User> getAllUsers() {
-    return User.sampleUsers;
-  }
+  // List<User> getAllUsers() {
+  //   return User.sampleUsers;
+  // }
 }

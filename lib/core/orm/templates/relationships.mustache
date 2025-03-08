@@ -1,0 +1,12 @@
+{
+  "table": "{{tableName}}",
+  "relations": [
+    {{#relations}}
+    {
+      "type": "OneToMany",
+      "targetTable": "{{targetTable}}",
+      "targetField": "{{targetField}}"
+    }{{^last}},{{/last}}
+    {{/relations}}
+  ]
+}

@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:shelf/shelf.dart';
-import '../../core/annotations.dart';
+import '../../core/annotations/route.dart';
 import 'package:mustache_template/mustache_template.dart';
 
 class AboutController {

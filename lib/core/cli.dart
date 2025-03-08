@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'package:darvel/app/models/User.dart';
+import 'package:darvel/core/orm/entity_metadata.dart';
+import 'package:darvel/core/orm/migration_generator.dart';
 import 'package:yaml/yaml.dart';
 
 class Cli {
@@ -35,6 +38,8 @@ class Cli {
           print('Please provide a migration name');
           return;
         }
+        final entityName = args[1];
+        //generateMigration(entityName);
         makeMigration(args[1]);
         break;
       case 'serve':
@@ -183,6 +188,29 @@ class ${name}Migration {
     file.createSync(recursive: true);
     file.writeAsStringSync(content);
     print('Migration $name created');
+  }
+
+  static void generateMigration(String entityName) {
+    // Supondo uma pasta lib/app/models com entidades
+    final entityClass = loadEntityClass(entityName);
+    final metadata = EntityMetadata.fromType(entityClass);
+
+    final migrationSql = MigrationGenerator.createTable(metadata);
+    final migrationFile = File(
+        'migrations/${DateTime.now().millisecondsSinceEpoch}_create_${metadata.tableName}.sql');
+
+    migrationFile.writeAsStringSync(migrationSql);
+    print('Migration criada: ${migrationFile.path}');
+  }
+
+  static Type loadEntityClass(String entityName) {
+    // Aqui pode ser por dart:mirrors ou código gerado (builder) para resolver types dinamicamente
+    switch (entityName) {
+      case 'User':
+      //return User;
+      default:
+        throw Exception('Entidade desconhecida: $entityName');
+    }
   }
 
   static void serveApp() {

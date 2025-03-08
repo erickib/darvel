@@ -49,7 +49,7 @@ import 'dart:async';
 
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
-import 'logging/internal_log_controller.dart';
+import 'logging/controller.dart';
 
 typedef RouteHandler0 = Future<Response> Function(Request request);
 typedef RouteHandler1 = Future<Response> Function(

@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:darvel/core/helpers/response.dart';
 import 'package:darvel/core/logging/logger_service.dart';
+import 'package:darvel/core/views/view_exception.dart';
 import 'package:mustache_template/mustache_template.dart';
 import 'package:shelf/shelf.dart';
-import 'view_exception.dart';
 
 class ViewRenderer {
   static const String _viewsPath = 'lib/views';

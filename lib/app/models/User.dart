@@ -1,12 +1,39 @@
-class User {
-  final int id;
-  final String name;
-  final String email;
+// @Entity(tableName: 'users')
+// class User {
+//   @PrimaryKey()
+//   int? id;
 
-  User(this.id, this.name, this.email);
+//   @Column(type: 'VARCHAR', length: 255)
+//   String name;
 
-  static List<User> sampleUsers = [
-    User(1, 'John Doe', 'john@example.com'),
-    User(2, 'Jane Doe', 'jane@example.com'),
-  ];
-}
+//   @Column(type: 'VARCHAR', length: 255, nullable: true)
+//   String? email;
+
+//   @Column(type: 'TIMESTAMP', defaultValue: 'CURRENT_TIMESTAMP')
+//   DateTime createdAt;
+
+//   User({
+//     this.id,
+//     required this.name,
+//     this.email,
+//     DateTime? createdAt,
+//   }) : createdAt = createdAt ?? DateTime.now();
+// }
+
+// @Table(name: 'users')
+// class User {
+//   @Column(name: 'id', primaryKey: true)
+//   final int id;
+
+//   @Column(name: 'name')
+//   final String name;
+
+//   @OneToMany(relatedType: Post)
+//   final List<Post> posts;
+
+//   User({
+//     required this.id,
+//     required this.name,
+//     required this.posts,
+//   });
+// }
