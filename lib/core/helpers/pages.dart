@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:intl/intl.dart';
 
 /// ### Internal Server Error Page
@@ -23,6 +21,7 @@ class PageInternalServerError {
   PageInternalServerError({required this.error, required this.stack});
 
   String render() {
+    var timestamp = DateTime.now();
     return '''
     <!DOCTYPE html>
     <html lang="en">
@@ -36,6 +35,7 @@ class PageInternalServerError {
     </head>
     <body>
         <h1>Internal Server Error</h1>
+        <h6>Time stamp: $timestamp</h6>
         <p><strong>Error:</strong> $error</p>
         <pre>$stack</pre>
     </body>
